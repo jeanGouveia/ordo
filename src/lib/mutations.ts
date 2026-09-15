@@ -41,6 +41,14 @@ export async function deleteCustomer(id: string, companyId: string) {
 export async function createQuote(data: QuoteInput, companyId: string) {
   const { items, ...quoteData } = data
   
+  const customer = await blink.db.customers.findFirst({
+    where: { id: quoteData.customerId, companyId },
+  })
+
+  if (!customer) {
+    throw new Error('Customer not found or does not belong to this company')
+  }
+
   const totalAmountCents = items.reduce(
     (sum, item) => sum + (item.quantity * item.unitPriceCents),
     0
@@ -72,6 +80,18 @@ export async function createQuote(data: QuoteInput, companyId: string) {
 }
 
 export async function updateQuote(id: string, data: Partial<QuoteInput>, companyId: string) {
+  const existing = await blink.db.quotes.findFirst({
+    where: { id, companyId },
+  })
+
+  if (!existing) {
+    throw new Error('Quote not found')
+  }
+
+  if (existing.status === 'approved') {
+    throw new Error('Cannot edit approved quote')
+  }
+
   const { items, ...quoteData } = data
   
   let totalAmountCents: number | undefined
@@ -110,11 +130,34 @@ export async function updateQuote(id: string, data: Partial<QuoteInput>, company
 }
 
 export async function updateQuoteStatus(id: string, status: string, companyId: string) {
-  const quote = await blink.db.quotes.update({
+  const quote = await blink.db.quotes.findFirst({
+    where: { id, companyId },
+  })
+
+  if (!quote) {
+    throw new Error('Quote not found')
+  }
+
+  const validTransitions: Record<string, string[]> = {
+    draft: ['sent', 'approved', 'cancelled'],
+    sent: ['approved', 'rejected', 'cancelled'],
+    approved: [],
+    rejected: [],
+    cancelled: [],
+  }
+
+  const currentStatus = quote.status
+  const allowedTransitions = validTransitions[currentStatus] || []
+
+  if (!allowedTransitions.includes(status)) {
+    throw new Error(`Invalid status transition from ${currentStatus} to ${status}`)
+  }
+
+  const updated = await blink.db.quotes.update({
     where: { id, companyId },
     data: { status },
   })
-  return quote
+  return updated
 }
 
 export async function deleteQuote(id: string, companyId: string) {
@@ -127,6 +170,24 @@ export async function deleteQuote(id: string, companyId: string) {
 }
 
 export async function createJob(data: JobInput, companyId: string) {
+  const customer = await blink.db.customers.findFirst({
+    where: { id: data.customerId, companyId },
+  })
+
+  if (!customer) {
+    throw new Error('Customer not found or does not belong to this company')
+  }
+
+  if (data.quoteId) {
+    const quote = await blink.db.quotes.findFirst({
+      where: { id: data.quoteId, companyId },
+    })
+
+    if (!quote) {
+      throw new Error('Quote not found or does not belong to this company')
+    }
+  }
+
   const job = await blink.db.jobs.create({
     data: {
       ...data,
@@ -151,6 +212,46 @@ export async function updateJobStatus(id: string, status: string, companyId: str
     where: { id, companyId },
     data: { status },
   })
+  return job
+}
+
+export async function approveQuoteAndCreateJob(quoteId: string, companyId: string) {
+  const existingJob = await blink.db.jobs.findFirst({
+    where: { quoteId, companyId },
+  })
+
+  if (existingJob) {
+    return existingJob
+  }
+
+  const quote = await blink.db.quotes.findFirst({
+    where: { id: quoteId, companyId },
+  })
+
+  if (!quote) {
+    throw new Error('Quote not found')
+  }
+
+  await blink.db.quotes.update({
+    where: { id: quoteId, companyId },
+    data: { status: 'approved' },
+  })
+
+  const job = await blink.db.jobs.create({
+    data: {
+      id: `job_${crypto.randomUUID()}`,
+      companyId,
+      customerId: quote.customerId,
+      quoteId: quote.id,
+      title: quote.title,
+      description: quote.description,
+      dueDate: null,
+      status: 'waiting',
+      totalAmountCents: quote.totalAmountCents,
+      createdAt: new Date().toISOString(),
+    },
+  })
+
   return job
 }
 
@@ -211,6 +312,22 @@ export async function deleteMaterialVariant(id: string, companyId: string) {
 }
 
 export async function addJobMaterial(jobId: string, data: JobMaterialInput, companyId: string) {
+  const job = await blink.db.jobs.findFirst({
+    where: { id: jobId, companyId },
+  })
+
+  if (!job) {
+    throw new Error('Job not found or does not belong to this company')
+  }
+
+  const material = await blink.db.materials.findFirst({
+    where: { id: data.materialId, companyId },
+  })
+
+  if (!material) {
+    throw new Error('Material not found or does not belong to this company')
+  }
+
   const jobMaterial = await blink.db.jobMaterials.create({
     data: {
       ...data,
@@ -238,6 +355,27 @@ export async function deleteJobMaterial(id: string, companyId: string) {
 }
 
 export async function createStockMovement(data: StockMovementInput, companyId: string) {
+  const material = await blink.db.materials.findFirst({
+    where: { id: data.materialId, companyId },
+  })
+
+  if (!material) {
+    throw new Error('Material not found')
+  }
+
+  const currentQuantity = Number(material.currentQuantity)
+  const quantityChange = data.movementType === 'entry' 
+    ? data.quantity 
+    : data.movementType === 'exit' 
+      ? -data.quantity 
+      : data.quantity
+
+  const newQuantity = currentQuantity + quantityChange
+
+  if (newQuantity < 0) {
+    throw new Error(`Estoque insuficiente. Disponível: ${currentQuantity}`)
+  }
+
   const movement = await blink.db.stockMovements.create({
     data: {
       ...data,
@@ -247,29 +385,43 @@ export async function createStockMovement(data: StockMovementInput, companyId: s
     },
   })
 
-  const material = await blink.db.materials.findFirst({
+  await blink.db.materials.update({
     where: { id: data.materialId, companyId },
+    data: { currentQuantity: String(newQuantity) },
   })
-
-  if (material) {
-    const quantityChange = data.movementType === 'entry' 
-      ? data.quantity 
-      : data.movementType === 'exit' 
-        ? -data.quantity 
-        : data.quantity
-
-    const newQuantity = Math.max(0, Number(material.currentQuantity) + quantityChange)
-    
-    await blink.db.materials.update({
-      where: { id: data.materialId, companyId },
-      data: { currentQuantity: String(newQuantity) },
-    })
-  }
 
   return movement
 }
 
 export async function createReceivable(data: ReceivableInput, companyId: string) {
+  const customer = await blink.db.customers.findFirst({
+    where: { id: data.customerId, companyId },
+  })
+
+  if (!customer) {
+    throw new Error('Customer not found or does not belong to this company')
+  }
+
+  if (data.jobId) {
+    const job = await blink.db.jobs.findFirst({
+      where: { id: data.jobId, companyId },
+    })
+
+    if (!job) {
+      throw new Error('Job not found or does not belong to this company')
+    }
+  }
+
+  if (data.quoteId) {
+    const quote = await blink.db.quotes.findFirst({
+      where: { id: data.quoteId, companyId },
+    })
+
+    if (!quote) {
+      throw new Error('Quote not found or does not belong to this company')
+    }
+  }
+
   const receivable = await blink.db.receivables.create({
     data: {
       ...data,
@@ -290,14 +442,26 @@ export async function updateReceivable(id: string, data: Partial<ReceivableInput
 }
 
 export async function markReceivableAsReceived(id: string, companyId: string) {
-  const receivable = await blink.db.receivables.update({
+  const receivable = await blink.db.receivables.findFirst({
+    where: { id, companyId },
+  })
+
+  if (!receivable) {
+    throw new Error('Receivable not found')
+  }
+
+  if (receivable.status === 'received') {
+    return receivable
+  }
+
+  const updated = await blink.db.receivables.update({
     where: { id, companyId },
     data: { 
       status: 'received',
       receivedAt: new Date().toISOString(),
     },
   })
-  return receivable
+  return updated
 }
 
 export async function deleteReceivable(id: string, companyId: string) {

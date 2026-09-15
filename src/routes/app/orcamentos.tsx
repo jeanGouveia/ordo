@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth'
 import { getQuotes, getQuoteItems, getCustomers } from '@/lib/queries'
-import { createQuote, updateQuote, updateQuoteStatus, deleteQuote } from '@/lib/mutations'
+import { createQuote, updateQuote, updateQuoteStatus, deleteQuote, approveQuoteAndCreateJob } from '@/lib/mutations'
 import { quoteSchema, quoteItemSchema } from '@/lib/schemas'
 import { formatCurrency, formatDate } from '@/lib/formatters'
 import { toast } from 'sonner'
@@ -178,19 +178,7 @@ function QuotesPage() {
     if (!confirm('Deseja aprovar este orçamento e criar um trabalho?')) return
 
     try {
-      await updateQuoteStatus(quote.id, 'approved', company.id)
-      
-      const { createJob } = await import('@/lib/mutations')
-      await createJob({
-        customerId: quote.customerId,
-        quoteId: quote.id,
-        title: quote.title,
-        description: quote.description,
-        dueDate: quote.validUntil,
-        status: 'waiting',
-        totalAmountCents: Number(quote.totalAmountCents),
-      }, company.id)
-      
+      await approveQuoteAndCreateJob(quote.id, company.id)
       toast.success('Orçamento aprovado e trabalho criado')
       loadQuotes()
     } catch (error) {

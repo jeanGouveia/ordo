@@ -61,8 +61,9 @@ function MaterialsPage() {
   const loadVariants = async (materialId: string) => {
     if (!company) return
     try {
-      const data = await getMaterialVariants(materialId, company.id)
-      setVariants(data.map((v: any) => ({
+      const allVariants = await getMaterialVariants(company.id)
+      const materialVariants = allVariants.filter(v => v.materialId === materialId)
+      setVariants(materialVariants.map((v: any) => ({
         materialId: v.materialId,
         label: v.label,
       })))

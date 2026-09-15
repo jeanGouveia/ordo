@@ -164,10 +164,10 @@ export async function getMaterialById(id: string, companyId: string): Promise<Ma
   }
 }
 
-export async function getMaterialVariants(materialId: string, companyId: string): Promise<MaterialVariantsRow[]> {
+export async function getMaterialVariants(companyId: string): Promise<MaterialVariantsRow[]> {
   try {
     return await blink.db.materialVariants.findMany({
-      where: { materialId, companyId },
+      where: { companyId },
     })
   } catch (error) {
     console.error('Error fetching material variants:', error)

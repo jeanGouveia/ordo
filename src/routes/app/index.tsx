@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
-import { getJobs, getCustomers, getMaterials, getJobMaterials, getReceivables } from '@/lib/queries'
+import { getJobs, getCustomers, getMaterials, getJobMaterials, getReceivables, getMaterialVariants } from '@/lib/queries'
 import { createJob } from '@/lib/mutations'
 import { calculateStockFuture } from '@/lib/stock-future'
 import { formatCurrency, formatDate } from '@/lib/formatters'
@@ -40,6 +40,7 @@ function TodayPage() {
   const [jobs, setJobs] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
   const [materials, setMaterials] = useState<any[]>([])
+  const [materialVariants, setMaterialVariants] = useState<any[]>([])
   const [jobMaterials, setJobMaterials] = useState<any[]>([])
   const [receivables, setReceivables] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,10 +52,11 @@ function TodayPage() {
     if (!company) return
     setLoading(true)
     try {
-      const [jobsData, customersData, materialsData, jobMaterialsData, receivablesData] = await Promise.all([
+      const [jobsData, customersData, materialsData, materialVariantsData, jobMaterialsData, receivablesData] = await Promise.all([
         getJobs(company.id),
         getCustomers(company.id),
         getMaterials(company.id),
+        getMaterialVariants(company.id),
         Promise.all((await getJobs(company.id)).map(job => getJobMaterials(job.id, company.id))).then(results => results.flat()),
         getReceivables(company.id),
       ])
@@ -62,10 +64,11 @@ function TodayPage() {
       setJobs(jobsData)
       setCustomers(customersData)
       setMaterials(materialsData)
+      setMaterialVariants(materialVariantsData)
       setJobMaterials(jobMaterialsData)
       setReceivables(receivablesData)
 
-      const stockCalc = calculateStockFuture(materialsData, jobsData, jobMaterialsData)
+      const stockCalc = calculateStockFuture(materialsData, jobsData, jobMaterialsData, materialVariantsData)
       setStockRequirements(stockCalc.requirements)
     } catch (error) {
       console.error('Error loading data:', error)
