@@ -33,15 +33,16 @@ import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
  */
 export const Route = createFileRoute('/app')({
   beforeLoad: async () => {
-    const user = blink.auth.currentUser
+    const user = blink.auth.currentUser()
     if (!user) {
       throw redirect({ to: '/' })
     }
 
     try {
-      const company = await blink.db.companies.findFirst({
-        where: { ownerUserId: user.uid },
+      const companies = await blink.db.table('companies').list({
+        where: { ownerUserId: user.id }
       })
+      const company = companies[0]
 
       if (!company) {
         throw redirect({ to: '/setup-company' })

@@ -20,7 +20,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
 import { getJobs, getCustomers, getMaterials, getJobMaterials, getReceivables, getMaterialVariants } from '@/lib/queries'
-import { createJob } from '@/lib/mutations'
+import { createJob, createStockMovement, markReceivableAsReceived } from '@/lib/mutations'
 import { calculateStockFuture } from '@/lib/stock-future'
 import { formatCurrency, formatDate } from '@/lib/formatters'
 import { jobSchema } from '@/lib/schemas'
@@ -120,8 +120,7 @@ function TodayPage() {
 
   function markBought(requirement: any) {
     if (!company) return
-    
-    const { createStockMovement } = require('@/lib/mutations')
+
     createStockMovement({
       materialId: requirement.materialId,
       variantId: requirement.variantId,
@@ -139,8 +138,7 @@ function TodayPage() {
 
   function markReceived(receivable: any) {
     if (!company) return
-    
-    const { markReceivableAsReceived } = require('@/lib/mutations')
+
     markReceivableAsReceived(receivable.id, company.id).then(() => {
       toast.success('Recebimento marcado', { description: 'O saldo foi recebido.' })
       loadData()
@@ -209,7 +207,7 @@ function TodayPage() {
                   const tone = jobMaterial.length === 0 ? 'warn' : 'ok'
                   const detail = jobMaterial.length === 0 ? 'Defina os materiais necessários' : `${jobMaterial.length} material(ais) separado(s)`
                   
-                  return <JobCard key={job.id} job={{ ...job, customerName: customer?.name || 'Cliente não encontrado', detail, tone }} />
+                  return <JobCard job={{ ...job, customerName: customer?.name || 'Cliente não encontrado', detail, tone }} />
                 })
               )}
             </div>

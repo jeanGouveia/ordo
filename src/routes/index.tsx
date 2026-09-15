@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import React from 'react'
 import { Building2, Hammer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -65,7 +66,7 @@ function HomePage() {
             <Button
               size="lg"
               onClick={() => {
-                blink.auth.signIn('google').catch(console.error)
+                blink.auth.signInWithGoogle().catch(console.error)
               }}
             >
               Entrar com Google
@@ -74,7 +75,7 @@ function HomePage() {
               size="lg"
               variant="outline"
               onClick={() => {
-                blink.auth.signIn('email').catch(console.error)
+                blink.auth.login()
               }}
             >
               Entrar com Email

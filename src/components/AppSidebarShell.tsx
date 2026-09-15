@@ -9,7 +9,7 @@
  * A native flex-col implementation (shadcn Button/Avatar/Tooltip primitives) for
  * full layout control — every line is yours to edit.
  */
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -167,7 +167,9 @@ export function AppSidebarShell() {
             </p>
           )}
           {NAV_ITEMS.map(item => (
-            <NavItem key={item.href} item={item} collapsed={collapsed} />
+            <React.Fragment key={item.href}>
+              <NavItem item={item} collapsed={collapsed} />
+            </React.Fragment>
           ))}
         </div>
 

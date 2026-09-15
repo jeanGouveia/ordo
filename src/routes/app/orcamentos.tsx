@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Plus, Send, Check, X, FileText, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -23,6 +23,8 @@ function QuotesPage() {
   const [quotes, setQuotes] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingApproval, setLoadingApproval] = useState<Record<string, boolean>>({})
+  const [loadingStatus, setLoadingStatus] = useState<Record<string, boolean>>({})
   const [showModal, setShowModal] = useState(false)
   const [editingQuote, setEditingQuote] = useState<any | null>(null)
   const [quoteItems, setQuoteItems] = useState<QuoteItemInput[]>([])
@@ -163,6 +165,10 @@ function QuotesPage() {
 
   const handleStatusChange = async (id: string, status: string) => {
     if (!company) return
+    if (loadingStatus[id]) return
+
+    setLoadingStatus(prev => ({ ...prev, [id]: true }))
+
     try {
       await updateQuoteStatus(id, status, company.id)
       toast.success('Status atualizado com sucesso')
@@ -170,12 +176,17 @@ function QuotesPage() {
     } catch (error) {
       console.error('Error updating quote status:', error)
       toast.error('Erro ao atualizar status')
+    } finally {
+      setLoadingStatus(prev => ({ ...prev, [id]: false }))
     }
   }
 
   const handleApprove = async (quote: any) => {
     if (!company) return
+    if (loadingApproval[quote.id]) return
     if (!confirm('Deseja aprovar este orçamento e criar um trabalho?')) return
+
+    setLoadingApproval(prev => ({ ...prev, [quote.id]: true }))
 
     try {
       await approveQuoteAndCreateJob(quote.id, company.id)
@@ -184,6 +195,8 @@ function QuotesPage() {
     } catch (error) {
       console.error('Error approving quote:', error)
       toast.error('Erro ao aprovar orçamento')
+    } finally {
+      setLoadingApproval(prev => ({ ...prev, [quote.id]: false }))
     }
   }
 
@@ -280,6 +293,7 @@ function QuotesPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleStatusChange(quote.id, 'sent')}
+                            disabled={loadingStatus[quote.id]}
                           >
                             <Send className="h-4 w-4" />
                           </Button>
@@ -287,6 +301,7 @@ function QuotesPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleApprove(quote)}
+                            disabled={loadingApproval[quote.id]}
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -298,6 +313,7 @@ function QuotesPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleApprove(quote)}
+                            disabled={loadingApproval[quote.id]}
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -305,6 +321,7 @@ function QuotesPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleStatusChange(quote.id, 'rejected')}
+                            disabled={loadingStatus[quote.id]}
                           >
                             <X className="h-4 w-4" />
                           </Button>

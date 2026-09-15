@@ -14,9 +14,10 @@ import type {
 
 export async function getCompanyByUserId(userId: string): Promise<CompaniesRow | null> {
   try {
-    return await blink.db.companies.findFirst({
-      where: { ownerUserId: userId },
+    const companies = await blink.db.table('companies').list({
+      where: { ownerUserId: userId }
     })
+    return companies[0] || null
   } catch (error) {
     console.error('Error fetching company:', error)
     return null
@@ -24,20 +25,18 @@ export async function getCompanyByUserId(userId: string): Promise<CompaniesRow |
 }
 
 export async function createCompany(data: Omit<CompaniesRow, 'id' | 'createdAt' | 'ownerUserId'>, userId: string): Promise<CompaniesRow> {
-  const company = await blink.db.companies.create({
-    data: {
-      ...data,
-      id: `cmp_${crypto.randomUUID()}`,
-      ownerUserId: userId,
-      createdAt: new Date().toISOString(),
-    },
+  const company = await blink.db.table('companies').create({
+    ...data,
+    id: `cmp_${crypto.randomUUID()}`,
+    ownerUserId: userId,
+    createdAt: new Date().toISOString(),
   })
   return company
 }
 
 export async function getCustomers(companyId: string): Promise<CustomersRow[]> {
   try {
-    return await blink.db.customers.findMany({
+    return await blink.db.table('customers').list({
       where: { companyId },
       orderBy: { createdAt: 'desc' },
     })
@@ -49,9 +48,10 @@ export async function getCustomers(companyId: string): Promise<CustomersRow[]> {
 
 export async function getCustomerById(id: string, companyId: string): Promise<CustomersRow | null> {
   try {
-    return await blink.db.customers.findFirst({
-      where: { id, companyId },
+    const customers = await blink.db.table('customers').list({
+      where: { id, companyId }
     })
+    return customers[0] || null
   } catch (error) {
     console.error('Error fetching customer:', error)
     return null
@@ -60,8 +60,8 @@ export async function getCustomerById(id: string, companyId: string): Promise<Cu
 
 export async function searchCustomers(companyId: string, query: string): Promise<CustomersRow[]> {
   try {
-    return await blink.db.customers.findMany({
-      where: { 
+    return await blink.db.table('customers').list({
+      where: {
         companyId,
         name: { contains: query, mode: 'insensitive' },
       },
@@ -75,7 +75,7 @@ export async function searchCustomers(companyId: string, query: string): Promise
 
 export async function getQuotes(companyId: string): Promise<QuotesRow[]> {
   try {
-    return await blink.db.quotes.findMany({
+    return await blink.db.table('quotes').list({
       where: { companyId },
       orderBy: { createdAt: 'desc' },
     })
@@ -87,9 +87,10 @@ export async function getQuotes(companyId: string): Promise<QuotesRow[]> {
 
 export async function getQuoteById(id: string, companyId: string): Promise<QuotesRow | null> {
   try {
-    return await blink.db.quotes.findFirst({
-      where: { id, companyId },
+    const quotes = await blink.db.table('quotes').list({
+      where: { id, companyId }
     })
+    return quotes[0] || null
   } catch (error) {
     console.error('Error fetching quote:', error)
     return null
@@ -98,7 +99,7 @@ export async function getQuoteById(id: string, companyId: string): Promise<Quote
 
 export async function getQuoteItems(quoteId: string, companyId: string): Promise<QuoteItemsRow[]> {
   try {
-    return await blink.db.quoteItems.findMany({
+    return await blink.db.table('quoteItems').list({
       where: { quoteId, companyId },
     })
   } catch (error) {
@@ -109,7 +110,7 @@ export async function getQuoteItems(quoteId: string, companyId: string): Promise
 
 export async function getJobs(companyId: string): Promise<JobsRow[]> {
   try {
-    return await blink.db.jobs.findMany({
+    return await blink.db.table('jobs').list({
       where: { companyId },
       orderBy: { createdAt: 'desc' },
     })
@@ -121,9 +122,10 @@ export async function getJobs(companyId: string): Promise<JobsRow[]> {
 
 export async function getJobById(id: string, companyId: string): Promise<JobsRow | null> {
   try {
-    return await blink.db.jobs.findFirst({
-      where: { id, companyId },
+    const jobs = await blink.db.table('jobs').list({
+      where: { id, companyId }
     })
+    return jobs[0] || null
   } catch (error) {
     console.error('Error fetching job:', error)
     return null
@@ -132,7 +134,7 @@ export async function getJobById(id: string, companyId: string): Promise<JobsRow
 
 export async function getJobMaterials(jobId: string, companyId: string): Promise<JobMaterialsRow[]> {
   try {
-    return await blink.db.jobMaterials.findMany({
+    return await blink.db.table('jobMaterials').list({
       where: { jobId, companyId },
     })
   } catch (error) {
@@ -143,7 +145,7 @@ export async function getJobMaterials(jobId: string, companyId: string): Promise
 
 export async function getMaterials(companyId: string): Promise<MaterialsRow[]> {
   try {
-    return await blink.db.materials.findMany({
+    return await blink.db.table('materials').list({
       where: { companyId },
       orderBy: { name: 'asc' },
     })
@@ -155,9 +157,10 @@ export async function getMaterials(companyId: string): Promise<MaterialsRow[]> {
 
 export async function getMaterialById(id: string, companyId: string): Promise<MaterialsRow | null> {
   try {
-    return await blink.db.materials.findFirst({
-      where: { id, companyId },
+    const materials = await blink.db.table('materials').list({
+      where: { id, companyId }
     })
+    return materials[0] || null
   } catch (error) {
     console.error('Error fetching material:', error)
     return null
@@ -166,7 +169,7 @@ export async function getMaterialById(id: string, companyId: string): Promise<Ma
 
 export async function getMaterialVariants(companyId: string): Promise<MaterialVariantsRow[]> {
   try {
-    return await blink.db.materialVariants.findMany({
+    return await blink.db.table('materialVariants').list({
       where: { companyId },
     })
   } catch (error) {
@@ -181,7 +184,7 @@ export async function getStockMovements(companyId: string, materialId?: string):
     if (materialId) {
       where.materialId = materialId
     }
-    return await blink.db.stockMovements.findMany({
+    return await blink.db.table('stockMovements').list({
       where,
       orderBy: { createdAt: 'desc' },
     })
@@ -193,7 +196,7 @@ export async function getStockMovements(companyId: string, materialId?: string):
 
 export async function getReceivables(companyId: string): Promise<ReceivablesRow[]> {
   try {
-    return await blink.db.receivables.findMany({
+    return await blink.db.table('receivables').list({
       where: { companyId },
       orderBy: { dueDate: 'asc' },
     })
@@ -205,7 +208,7 @@ export async function getReceivables(companyId: string): Promise<ReceivablesRow[
 
 export async function getReceivablesByStatus(companyId: string, status: string): Promise<ReceivablesRow[]> {
   try {
-    return await blink.db.receivables.findMany({
+    return await blink.db.table('receivables').list({
       where: { companyId, status },
       orderBy: { dueDate: 'asc' },
     })

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import { blink } from '@/blink/client'
 import type { UsersRow, CompaniesRow } from '@/lib/db-types'
 
@@ -18,12 +18,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = blink.auth.onAuthStateChanged(async (authUser) => {
-      if (authUser) {
+    const unsubscribe = blink.auth.onAuthStateChanged(async (authState) => {
+      if (authState.user) {
         try {
-          const userData = await blink.db.users.findUnique({
-            where: { id: authUser.uid },
-          })
+          const userData = await blink.db.table('users').get(authState.user.id)
           setUser(userData || null)
 
           if (userData) {
@@ -46,10 +44,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshCompanyForUser = async (userId: string) => {
     try {
-      const companyData = await blink.db.companies.findFirst({
-        where: { ownerUserId: userId },
+      const companies = await blink.db.table('companies').list({
+        where: { ownerUserId: userId }
       })
-      setCompany(companyData || null)
+      setCompany(companies[0] || null)
     } catch (error) {
       console.error('Error fetching company data:', error)
       setCompany(null)

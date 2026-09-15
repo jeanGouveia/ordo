@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,15 +12,16 @@ import { companySchema } from '@/lib/schemas'
 
 export const Route = createFileRoute('/setup-company')({
   beforeLoad: async () => {
-    const user = blink.auth.currentUser
+    const user = blink.auth.currentUser()
     if (!user) {
       throw redirect({ to: '/' })
     }
 
     try {
-      const company = await blink.db.companies.findFirst({
-        where: { ownerUserId: user.uid },
+      const companies = await blink.db.table('companies').list({
+        where: { ownerUserId: user.id }
       })
+      const company = companies[0]
 
       if (company) {
         throw redirect({ to: '/app' })
@@ -49,7 +50,7 @@ function SetupCompanyPage() {
     setLoading(true)
 
     try {
-      const user = blink.auth.currentUser
+      const user = blink.auth.currentUser()
       if (!user) {
         toast.error('Usuário não autenticado')
         return
@@ -57,13 +58,11 @@ function SetupCompanyPage() {
 
       const validatedData = companySchema.parse(formData)
 
-      await blink.db.companies.create({
-        data: {
-          ...validatedData,
-          id: `cmp_${crypto.randomUUID()}`,
-          ownerUserId: user.uid,
-          createdAt: new Date().toISOString(),
-        },
+      await blink.db.table('companies').create({
+        ...validatedData,
+        id: `cmp_${crypto.randomUUID()}`,
+        ownerUserId: user.id,
+        createdAt: new Date().toISOString(),
       })
 
       toast.success('Empresa cadastrada com sucesso!')
