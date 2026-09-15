@@ -1,5 +1,7 @@
-import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { SharedAppLayout } from '@/layouts/shared-app-layout'
+import { blink } from '@/blink/client'
+import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
 
 /**
  * App shell layout — mounted at the REAL `/app` segment (not a pathless `_app`).
@@ -30,13 +32,34 @@ import { SharedAppLayout } from '@/layouts/shared-app-layout'
  * constructor").
  */
 export const Route = createFileRoute('/app')({
+  beforeLoad: async () => {
+    const user = blink.auth.currentUser
+    if (!user) {
+      throw redirect({ to: '/' })
+    }
+
+    try {
+      const company = await blink.db.companies.findFirst({
+        where: { ownerUserId: user.uid },
+      })
+
+      if (!company) {
+        throw redirect({ to: '/setup-company' })
+      }
+    } catch (error) {
+      console.error('Error checking company:', error)
+      throw redirect({ to: '/' })
+    }
+  },
   component: AppLayout,
 })
 
 function AppLayout() {
   return (
-    <SharedAppLayout appName="App">
-      <Outlet />
+    <SharedAppLayout appName="Ordem Simples">
+      <BlinkClientBoundary>
+        <Outlet />
+      </BlinkClientBoundary>
     </SharedAppLayout>
   )
 }

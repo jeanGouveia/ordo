@@ -9,14 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SetupCompanyRouteImport } from './routes/setup-company'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppTrabalhosRouteImport } from './routes/app/trabalhos'
 import { Route as AppOrcamentosRouteImport } from './routes/app/orcamentos'
 import { Route as AppMateriaisRouteImport } from './routes/app/materiais'
+import { Route as AppClientesRouteImport } from './routes/app/clientes'
 import { Route as AppAReceberRouteImport } from './routes/app/a-receber'
 
+const SetupCompanyRoute = SetupCompanyRouteImport.update({
+  id: '/setup-company',
+  path: '/setup-company',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -47,6 +54,11 @@ const AppMateriaisRoute = AppMateriaisRouteImport.update({
   path: '/materiais',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientesRoute = AppClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAReceberRoute = AppAReceberRouteImport.update({
   id: '/a-receber',
   path: '/a-receber',
@@ -56,7 +68,9 @@ const AppAReceberRoute = AppAReceberRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/setup-company': typeof SetupCompanyRoute
   '/app/a-receber': typeof AppAReceberRoute
+  '/app/clientes': typeof AppClientesRoute
   '/app/materiais': typeof AppMateriaisRoute
   '/app/orcamentos': typeof AppOrcamentosRoute
   '/app/trabalhos': typeof AppTrabalhosRoute
@@ -64,7 +78,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/setup-company': typeof SetupCompanyRoute
   '/app/a-receber': typeof AppAReceberRoute
+  '/app/clientes': typeof AppClientesRoute
   '/app/materiais': typeof AppMateriaisRoute
   '/app/orcamentos': typeof AppOrcamentosRoute
   '/app/trabalhos': typeof AppTrabalhosRoute
@@ -74,7 +90,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/setup-company': typeof SetupCompanyRoute
   '/app/a-receber': typeof AppAReceberRoute
+  '/app/clientes': typeof AppClientesRoute
   '/app/materiais': typeof AppMateriaisRoute
   '/app/orcamentos': typeof AppOrcamentosRoute
   '/app/trabalhos': typeof AppTrabalhosRoute
@@ -85,7 +103,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/setup-company'
     | '/app/a-receber'
+    | '/app/clientes'
     | '/app/materiais'
     | '/app/orcamentos'
     | '/app/trabalhos'
@@ -93,7 +113,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/setup-company'
     | '/app/a-receber'
+    | '/app/clientes'
     | '/app/materiais'
     | '/app/orcamentos'
     | '/app/trabalhos'
@@ -102,7 +124,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/setup-company'
     | '/app/a-receber'
+    | '/app/clientes'
     | '/app/materiais'
     | '/app/orcamentos'
     | '/app/trabalhos'
@@ -112,10 +136,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  SetupCompanyRoute: typeof SetupCompanyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/setup-company': {
+      id: '/setup-company'
+      path: '/setup-company'
+      fullPath: '/setup-company'
+      preLoaderRoute: typeof SetupCompanyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -158,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMateriaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/clientes': {
+      id: '/app/clientes'
+      path: '/clientes'
+      fullPath: '/app/clientes'
+      preLoaderRoute: typeof AppClientesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/a-receber': {
       id: '/app/a-receber'
       path: '/a-receber'
@@ -170,6 +209,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAReceberRoute: typeof AppAReceberRoute
+  AppClientesRoute: typeof AppClientesRoute
   AppMateriaisRoute: typeof AppMateriaisRoute
   AppOrcamentosRoute: typeof AppOrcamentosRoute
   AppTrabalhosRoute: typeof AppTrabalhosRoute
@@ -178,6 +218,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAReceberRoute: AppAReceberRoute,
+  AppClientesRoute: AppClientesRoute,
   AppMateriaisRoute: AppMateriaisRoute,
   AppOrcamentosRoute: AppOrcamentosRoute,
   AppTrabalhosRoute: AppTrabalhosRoute,
@@ -189,6 +230,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  SetupCompanyRoute: SetupCompanyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,52 +1,107 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { Building2, Hammer } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
+import { blink } from '@/blink/client'
 
 /**
- * Home route (/). A neutral, FULL-BLEED starting point — no app chrome, no
- * sidebar. Replace this body with your real landing page or app home.
- *
- * Add more pages as files under `src/routes/` (e.g. `src/routes/about.tsx`
- * → /about). The HTML document + providers live once in `__root.tsx`.
- *
- * Building a SaaS / dashboard app? The sidebar shell already exists at
- * `src/routes/app.tsx` with its home at `src/routes/app/index.tsx` (→ /app) — add
- * your pages as files in `src/routes/app/`. Do NOT create a `src/routes/_app.tsx`:
- * a `_`-prefixed layout is PATHLESS, so `_app/index.tsx` resolves to `/` and
- * collides with THIS file (build fails: "Conflicting configuration paths").
- * Dashboard-only product? Keep this file and redirect it to `/app`.
- * Landing pages, marketing sites, content, and games stay full-bleed (default) —
- * delete `src/routes/app.tsx` + `src/routes/app/` if you don't need a dashboard.
- *
- * SEO: set per-page title/description/Open Graph here in `head()`.
- *
- * SSR / routing (this template is server-rendered — TanStack Start):
- * - Routes are files under `src/routes/` that `export const Route =
- *   createFileRoute('/path')({ component })`. NEVER `export default` a route.
- *   Navigate with `Link` from `@tanstack/react-router` (there is no `NavLink`).
- * - Reading Blink auth/SDK state (`blink.auth`), `localStorage`, or `window` at
- *   render CRASHES SSR / hydration-mismatches and ships a blank first page. Wrap
- *   that subtree in `<BlinkClientBoundary fallback={…}>` (from
- *   `@/components/BlinkClientBoundary`) — wrap the whole tree if the entire page
- *   needs the browser. Keep static content outside the boundary. Do NOT use the
- *   route's `ssr: false`: a client-only route in this template hits Start's
- *   server-context `node:async_hooks` path (a throwing browser stub) and ships a
- *   BLANK preview ("AsyncLocalStorage is not a constructor").
+ * Home route (/). Landing page with authentication.
  */
 export const Route = createFileRoute('/')({
-  beforeLoad: () => {
-    throw redirect({ to: '/app' })
-  },
+  component: HomePage,
 })
 
-function Home() {
+function HomePage() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
-      <h1 className="text-2xl font-semibold tracking-tight">Your Blink app is ready</h1>
-      <p className="max-w-md text-sm text-muted-foreground">
-        This is the full-bleed starter home with no sidebar. Edit{' '}
-        <code className="rounded bg-muted px-1">src/routes/index.tsx</code> to build your
-        page, or add routes under{' '}
-        <code className="rounded bg-muted px-1">src/routes/</code>.
-      </p>
-    </main>
+    <BlinkClientBoundary>
+      <div className="min-h-dvh flex flex-col">
+        <header className="border-b border-border bg-background">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-bold">
+                OS
+              </div>
+              <span className="font-semibold">Ordem Simples</span>
+            </div>
+            <Button
+              onClick={() => window.location.href = '/app'}
+              variant="ghost"
+            >
+              Entrar
+            </Button>
+          </div>
+        </header>
+
+        <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12 text-center sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+              Do orçamento à entrega, sem perder prazo, material ou dinheiro.
+            </h1>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Sistema simples para pequenos negócios que produzem ou prestam serviços sob encomenda.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-3">
+            <FeatureCard
+              icon={<Hammer className="h-6 w-6" />}
+              title="O que preciso fazer?"
+              description="Acompanhe trabalhos, prazos e status em um só lugar."
+            />
+            <FeatureCard
+              icon={<Building2 className="h-6 w-6" />}
+              title="O que preciso comprar?"
+              description="Saiba exatamente quais materiais comprar e quando."
+            />
+            <FeatureCard
+              icon={<span className="text-2xl">💰</span>}
+              title="O que preciso receber?"
+              description="Controle entradas, saldos e cobranças de clientes."
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <Button
+              size="lg"
+              onClick={() => {
+                blink.auth.signIn('google').catch(console.error)
+              }}
+            >
+              Entrar com Google
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => {
+                blink.auth.signIn('email').catch(console.error)
+              }}
+            >
+              Entrar com Email
+            </Button>
+          </div>
+        </main>
+
+        <footer className="border-t border-border bg-background py-6">
+          <div className="mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
+            <p>© 2024 Ordem Simples · Valtun</p>
+          </div>
+        </footer>
+      </div>
+    </BlinkClientBoundary>
+  )
+}
+
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <Card>
+      <CardContent className="p-6 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+          {icon}
+        </div>
+        <h3 className="font-semibold">{title}</h3>
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
   )
 }

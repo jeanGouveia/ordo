@@ -7,6 +7,7 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
+import { AuthProvider } from '@/lib/auth'
 import type { ReactNode } from 'react'
 import indexCss from '../index.css?url'
 
@@ -103,17 +104,19 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          <TooltipProvider delayDuration={0}>
-            <Toaster />
-            {/*
-              Full-bleed by default — NO app chrome. Child routes render directly.
-              SaaS / dashboard app? The sidebar shell already exists at
-              `src/routes/app.tsx` (the real `/app` segment) — add pages under
-              `src/routes/app/`. Landing pages, marketing sites, content, and games
-              stay full-bleed (delete `src/routes/app.tsx` + `src/routes/app/`).
-            */}
-            {children}
-          </TooltipProvider>
+          <AuthProvider>
+            <TooltipProvider delayDuration={0}>
+              <Toaster />
+              {/*
+                Full-bleed by default — NO app chrome. Child routes render directly.
+                SaaS / dashboard app? The sidebar shell already exists at
+                `src/routes/app.tsx` (the real `/app` segment) — add pages under
+                `src/routes/app/`. Landing pages, marketing sites, content, and games
+                stay full-bleed (delete `src/routes/app.tsx` + `src/routes/app/`).
+              */}
+              {children}
+            </TooltipProvider>
+          </AuthProvider>
         </QueryClientProvider>
         <Scripts />
       </body>
