@@ -132,7 +132,7 @@ function calculateForMaterial(
     }
   }
 
-  const missingQuantity = Math.max(0, Math.abs(projectedQuantity))
+  const missingQuantity = Math.max(0, -projectedQuantity)
   const totalRequired = relatedJobs.reduce((sum, job) => sum + job.quantity, 0)
 
   if (missingQuantity === 0) {

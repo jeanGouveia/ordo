@@ -86,7 +86,7 @@ function SetupCompanyPage() {
               </div>
               <h1 className="text-2xl font-semibold">Configurar sua empresa</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Preencha os dados básicos para começar a usar o Ordem Simples.
+                Configure o ORDO para começar a gerenciar seus trabalhos.
               </p>
             </div>
 

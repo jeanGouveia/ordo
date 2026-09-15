@@ -26,7 +26,6 @@ import {
   LogOut,
   PackageSearch,
   PanelLeft,
-  UserRound,
   WalletCards,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -48,7 +47,6 @@ interface NavItemDef {
 // e.g. `src/routes/app/items.tsx` → { href: '/app/items', label: 'Items' }.
 const NAV_ITEMS: NavItemDef[] = [
   { href: '/app', icon: <PackageSearch className="h-4 w-4" />, label: 'Hoje', active: true },
-  { href: '/app/clientes', icon: <UserRound className="h-4 w-4" />, label: 'Clientes' },
   { href: '/app/orcamentos', icon: <FileText className="h-4 w-4" />, label: 'Orçamentos' },
   { href: '/app/trabalhos', icon: <Hammer className="h-4 w-4" />, label: 'Trabalhos' },
   { href: '/app/materiais', icon: <CalendarCheck className="h-4 w-4" />, label: 'Materiais' },
@@ -111,7 +109,6 @@ export function AppSidebarShell() {
 
   const userName = user?.displayName || user?.email?.split('@')[0] || 'User'
   const userEmail = user?.email || 'user@example.com'
-  const companyName = company?.name || 'Empresa'
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -132,9 +129,9 @@ export function AppSidebarShell() {
           {!collapsed && (
             <>
               <div className="flex items-center justify-center h-7 w-7 rounded-md bg-primary text-primary-foreground text-xs font-bold shrink-0">
-                OS
+                OR
               </div>
-              <span className="flex-1 font-semibold text-sm truncate">Ordem Simples</span>
+              <span className="flex-1 font-semibold text-sm truncate">ORDO</span>
             </>
           )}
           <Tooltip>
@@ -198,9 +195,9 @@ export function AppSidebarShell() {
                 <AvatarFallback className="text-[10px] bg-muted">{userInitials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-medium leading-tight truncate">{companyName}</p>
+                <p className="text-xs font-medium leading-tight truncate">{userName}</p>
                 <p className="text-[10px] text-muted-foreground leading-tight truncate">
-                  {userName}
+                  {userEmail}
                 </p>
               </div>
             </button>
@@ -231,7 +228,7 @@ export function AppSidebarShell() {
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 shrink-0" />
-              Sair
+              Sign out
             </Button>
           )}
         </div>

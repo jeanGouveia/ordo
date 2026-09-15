@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import type { ReceivableInput } from '@/lib/schemas'
 
 export const Route = createFileRoute('/app/a-receber')({
-  head: () => ({ meta: [{ title: 'A receber · Ordem Simples' }] }),
+  head: () => ({ meta: [{ title: 'A receber · ORDO' }] }),
   component: ReceivablesPage,
 })
 

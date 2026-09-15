@@ -21,9 +21,9 @@ function HomePage() {
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-bold">
-                OS
+                OR
               </div>
-              <span className="font-semibold">Ordem Simples</span>
+              <span className="font-semibold">ORDO</span>
             </div>
             <Button
               onClick={() => window.location.href = '/app'}
@@ -85,7 +85,7 @@ function HomePage() {
 
         <footer className="border-t border-border bg-background py-6">
           <div className="mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
-            <p>© 2024 Ordem Simples · Valtun</p>
+            <p>© 2024 ORDO · Valtun</p>
           </div>
         </footer>
       </div>

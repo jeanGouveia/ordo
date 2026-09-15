@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import type { CustomerInput } from '@/lib/schemas'
 
 export const Route = createFileRoute('/app/clientes')({
-  head: () => ({ meta: [{ title: 'Clientes · Ordem Simples' }] }),
+  head: () => ({ meta: [{ title: 'Clientes · ORDO' }] }),
   component: CustomersPage,
 })
 

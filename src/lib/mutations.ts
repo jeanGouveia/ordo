@@ -23,11 +23,29 @@ export async function createCustomer(data: CustomerInput, companyId: string) {
 }
 
 export async function updateCustomer(id: string, data: Partial<CustomerInput>, companyId: string) {
-  const customer = await blink.db.table('customers').update(id, data)
-  return customer
+  const customers = await blink.db.table('customers').list({
+    where: { id, companyId }
+  })
+  const customer = customers[0]
+
+  if (!customer) {
+    throw new Error('Customer not found or does not belong to this company')
+  }
+
+  const updated = await blink.db.table('customers').update(id, data)
+  return updated
 }
 
 export async function deleteCustomer(id: string, companyId: string) {
+  const customers = await blink.db.table('customers').list({
+    where: { id, companyId }
+  })
+  const customer = customers[0]
+
+  if (!customer) {
+    throw new Error('Customer not found or does not belong to this company')
+  }
+
   await blink.db.table('customers').delete(id)
 }
 
@@ -145,6 +163,15 @@ export async function updateQuoteStatus(id: string, status: string, companyId: s
 }
 
 export async function deleteQuote(id: string, companyId: string) {
+  const quotes = await blink.db.table('quotes').list({
+    where: { id, companyId }
+  })
+  const quote = quotes[0]
+
+  if (!quote) {
+    throw new Error('Quote not found or does not belong to this company')
+  }
+
   await blink.db.table('quoteItems').deleteMany({
     where: { quoteId: id, companyId },
   })
@@ -182,13 +209,31 @@ export async function createJob(data: JobInput, companyId: string) {
 }
 
 export async function updateJob(id: string, data: Partial<JobInput>, companyId: string) {
-  const job = await blink.db.table('jobs').update(id, data)
-  return job
+  const jobs = await blink.db.table('jobs').list({
+    where: { id, companyId }
+  })
+  const job = jobs[0]
+
+  if (!job) {
+    throw new Error('Job not found or does not belong to this company')
+  }
+
+  const updated = await blink.db.table('jobs').update(id, data)
+  return updated
 }
 
 export async function updateJobStatus(id: string, status: string, companyId: string) {
-  const job = await blink.db.table('jobs').update(id, { status })
-  return job
+  const jobs = await blink.db.table('jobs').list({
+    where: { id, companyId }
+  })
+  const job = jobs[0]
+
+  if (!job) {
+    throw new Error('Job not found or does not belong to this company')
+  }
+
+  const updated = await blink.db.table('jobs').update(id, { status })
+  return updated
 }
 
 export async function approveQuoteAndCreateJob(quoteId: string, companyId: string) {
@@ -229,6 +274,15 @@ export async function approveQuoteAndCreateJob(quoteId: string, companyId: strin
 }
 
 export async function deleteJob(id: string, companyId: string) {
+  const jobs = await blink.db.table('jobs').list({
+    where: { id, companyId }
+  })
+  const job = jobs[0]
+
+  if (!job) {
+    throw new Error('Job not found or does not belong to this company')
+  }
+
   await blink.db.table('jobMaterials').deleteMany({
     where: { jobId: id, companyId },
   })
@@ -246,11 +300,29 @@ export async function createMaterial(data: MaterialInput, companyId: string) {
 }
 
 export async function updateMaterial(id: string, data: Partial<MaterialInput>, companyId: string) {
-  const material = await blink.db.table('materials').update(id, data)
-  return material
+  const materials = await blink.db.table('materials').list({
+    where: { id, companyId }
+  })
+  const material = materials[0]
+
+  if (!material) {
+    throw new Error('Material not found or does not belong to this company')
+  }
+
+  const updated = await blink.db.table('materials').update(id, data)
+  return updated
 }
 
 export async function deleteMaterial(id: string, companyId: string) {
+  const materials = await blink.db.table('materials').list({
+    where: { id, companyId }
+  })
+  const material = materials[0]
+
+  if (!material) {
+    throw new Error('Material not found or does not belong to this company')
+  }
+
   await blink.db.table('materialVariants').deleteMany({
     where: { materialId: id, companyId },
   })
@@ -268,6 +340,15 @@ export async function createMaterialVariant(data: MaterialVariantInput, companyI
 }
 
 export async function deleteMaterialVariant(id: string, companyId: string) {
+  const variants = await blink.db.table('materialVariants').list({
+    where: { id, companyId }
+  })
+  const variant = variants[0]
+
+  if (!variant) {
+    throw new Error('Material variant not found or does not belong to this company')
+  }
+
   await blink.db.table('materialVariants').delete(id)
 }
 
@@ -301,11 +382,29 @@ export async function addJobMaterial(jobId: string, data: JobMaterialInput, comp
 }
 
 export async function updateJobMaterial(id: string, data: Partial<JobMaterialInput>, companyId: string) {
-  const jobMaterial = await blink.db.table('jobMaterials').update(id, data)
-  return jobMaterial
+  const jobMaterials = await blink.db.table('jobMaterials').list({
+    where: { id, companyId }
+  })
+  const jobMaterial = jobMaterials[0]
+
+  if (!jobMaterial) {
+    throw new Error('Job material not found or does not belong to this company')
+  }
+
+  const updated = await blink.db.table('jobMaterials').update(id, data)
+  return updated
 }
 
 export async function deleteJobMaterial(id: string, companyId: string) {
+  const jobMaterials = await blink.db.table('jobMaterials').list({
+    where: { id, companyId }
+  })
+  const jobMaterial = jobMaterials[0]
+
+  if (!jobMaterial) {
+    throw new Error('Job material not found or does not belong to this company')
+  }
+
   await blink.db.table('jobMaterials').delete(id)
 }
 
@@ -386,8 +485,17 @@ export async function createReceivable(data: ReceivableInput, companyId: string)
 }
 
 export async function updateReceivable(id: string, data: Partial<ReceivableInput>, companyId: string) {
-  const receivable = await blink.db.table('receivables').update(id, data)
-  return receivable
+  const receivables = await blink.db.table('receivables').list({
+    where: { id, companyId }
+  })
+  const receivable = receivables[0]
+
+  if (!receivable) {
+    throw new Error('Receivable not found or does not belong to this company')
+  }
+
+  const updated = await blink.db.table('receivables').update(id, data)
+  return updated
 }
 
 export async function markReceivableAsReceived(id: string, companyId: string) {
@@ -412,6 +520,15 @@ export async function markReceivableAsReceived(id: string, companyId: string) {
 }
 
 export async function deleteReceivable(id: string, companyId: string) {
+  const receivables = await blink.db.table('receivables').list({
+    where: { id, companyId }
+  })
+  const receivable = receivables[0]
+
+  if (!receivable) {
+    throw new Error('Receivable not found or does not belong to this company')
+  }
+
   await blink.db.table('receivables').delete(id)
 }
 

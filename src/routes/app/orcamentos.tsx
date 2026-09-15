@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import type { QuoteInput, QuoteItemInput } from '@/lib/schemas'
 
 export const Route = createFileRoute('/app/orcamentos')({
-  head: () => ({ meta: [{ title: 'Orçamentos · Ordem Simples' }] }),
+  head: () => ({ meta: [{ title: 'Orçamentos · ORDO' }] }),
   component: QuotesPage,
 })
 

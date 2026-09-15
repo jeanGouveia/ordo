@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import type { JobInput, JobMaterialInput } from '@/lib/schemas'
 
 export const Route = createFileRoute('/app/trabalhos')({
-  head: () => ({ meta: [{ title: 'Trabalhos · Ordem Simples' }] }),
+  head: () => ({ meta: [{ title: 'Trabalhos · ORDO' }] }),
   component: JobsPage,
 })
 

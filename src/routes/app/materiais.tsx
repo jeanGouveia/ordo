@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import type { MaterialInput, MaterialVariantInput, StockMovementInput } from '@/lib/schemas'
 
 export const Route = createFileRoute('/app/materiais')({
-  head: () => ({ meta: [{ title: 'Materiais · Ordem Simples' }] }),
+  head: () => ({ meta: [{ title: 'Materiais · ORDO' }] }),
   component: MaterialsPage,
 })
 

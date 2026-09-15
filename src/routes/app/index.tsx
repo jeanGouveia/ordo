@@ -28,8 +28,8 @@ import { jobSchema } from '@/lib/schemas'
 export const Route = createFileRoute('/app/')({
   head: () => ({
     meta: [
-      { title: 'Hoje · Ordem Simples' },
-      { name: 'description', content: 'Do orçamento à entrega, sem perder prazo, material ou dinheiro.' },
+      { title: 'Hoje · ORDO' },
+      { name: 'description', content: 'Do orçamento à entrega, tudo sob controle.' },
     ],
   }),
   component: TodayPage,
@@ -172,7 +172,7 @@ function TodayPage() {
         <header className="mb-7 flex items-start justify-between gap-4">
           <div>
             <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              <span className="h-2 w-2 rounded-full bg-primary" /> Ordem Simples
+              <span className="h-2 w-2 rounded-full bg-primary" /> ORDO
             </p>
             <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Bom dia, {userName}.</h1>
             <p className="mt-1 text-sm text-muted-foreground">Aqui está o que merece sua atenção hoje.</p>
@@ -261,7 +261,7 @@ function TodayPage() {
         </div>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-2 py-2 backdrop-blur md:hidden"><div className="mx-auto grid max-w-md grid-cols-6 gap-1"><MobileNav icon={<CalendarDays />} label="Hoje" active /><MobileNav icon={<UserRound />} label="Clientes" /><MobileNav icon={<FileIcon />} label="Orçamentos" /><MobileNav icon={<Hammer />} label="Trabalhos" /><MobileNav icon={<PackageSearch />} label="Materiais" /><MobileNav icon={<WalletCards />} label="A receber" /></div></nav>
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-2 py-2 backdrop-blur md:hidden"><div className="mx-auto grid max-w-md grid-cols-4 gap-1"><MobileNav icon={<CalendarDays />} label="Hoje" active /><MobileNav icon={<FileIcon />} label="Orçamentos" /><MobileNav icon={<Hammer />} label="Trabalhos" /><MobileNav icon={<ShoppingCart />} label="Materiais" /></div></nav>
 
       {showNew && <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/35 p-3 sm:items-center"><div role="dialog" aria-modal="true" className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-lg"><div className="mb-5 flex items-center justify-between"><div><h2 className="text-lg font-semibold">Novo trabalho</h2><p className="text-sm text-muted-foreground">Comece pelo que você precisa entregar.</p></div><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowNew(false)}><X /></Button></div><label className="text-sm font-medium" htmlFor="job-title">Nome do trabalho</label><input id="job-title" value={newTitle} onChange={event => setNewTitle(event.target.value)} placeholder="Ex.: Fachada da loja" className="mt-2 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" autoFocus /><Button className="mt-4 w-full" onClick={addJob}>Criar trabalho</Button></div></div>}
     </div>
@@ -280,11 +280,9 @@ function JobCard({ job }: { job: any }) {
 function MobileNav({ icon, label, active }: { icon: ReactNode; label: string; active?: boolean }) { 
   const hrefMap: Record<string, string> = {
     'Hoje': '/app',
-    'Clientes': '/app/clientes',
     'Orçamentos': '/app/orcamentos',
     'Trabalhos': '/app/trabalhos',
     'Materiais': '/app/materiais',
-    'A receber': '/app/a-receber',
   }
   const href = hrefMap[label] || '/app'
   return <a href={href} className={`flex flex-col items-center gap-1 rounded-lg py-1 text-[11px] ${active ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>{icon}<span>{label}</span></a> 
