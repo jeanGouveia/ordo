@@ -62,9 +62,9 @@ function MaterialsPage() {
     if (!company) return
     try {
       const allVariants = await getMaterialVariants(company.id)
-      const materialVariants = allVariants.filter(v => v.materialId === materialId)
+      const materialVariants = allVariants.filter(v => v.material_id === materialId)
       setVariants(materialVariants.map((v: any) => ({
-        materialId: v.materialId,
+        materialId: v.material_id,
         label: v.label,
       })))
     } catch (error) {

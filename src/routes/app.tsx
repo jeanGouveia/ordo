@@ -1,7 +1,6 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { SharedAppLayout } from '@/layouts/shared-app-layout'
-import { blink } from '@/blink/client'
-import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
+import { supabase } from '@/lib/supabase/client'
 import { waitForAuthReady, getCompanyForUser } from '@/lib/auth-guards'
 
 /**
@@ -25,23 +24,19 @@ import { waitForAuthReady, getCompanyForUser } from '@/lib/auth-guards'
  * `src/routes/app.tsx` and the `src/routes/app/` folder. Deleting is always safe.
  *
  * Auth-gate the whole shell by wrapping <Outlet /> in your auth check here — one
- * place, not per page. Browser-only state (blink.auth, localStorage, window) must
- * sit inside <BlinkClientBoundary> (wrap the whole shell if the entire app is
- * browser-only). Do NOT use the route's `ssr: false` — a client-only route in this
- * TanStack Start template hits Start's server-context `node:async_hooks` path (a
- * throwing browser stub) and ships a BLANK preview ("AsyncLocalStorage is not a
- * constructor").
+ * place, not per page. Browser-only state (localStorage, window) must
+ * sit inside appropriate boundary.
  */
 export const Route = createFileRoute('/app')({
   beforeLoad: async () => {
-    // Wait for Blink auth to finish initializing
+    // Wait for Supabase auth to finish initializing
     const isAuthenticated = await waitForAuthReady()
     
     if (!isAuthenticated) {
       throw redirect({ to: '/' })
     }
 
-    const user = blink.auth.currentUser()
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       throw redirect({ to: '/' })
     }
@@ -57,9 +52,7 @@ export const Route = createFileRoute('/app')({
 function AppLayout() {
   return (
     <SharedAppLayout appName="ORDO">
-      <BlinkClientBoundary>
-        <Outlet />
-      </BlinkClientBoundary>
+      <Outlet />
     </SharedAppLayout>
   )
 }

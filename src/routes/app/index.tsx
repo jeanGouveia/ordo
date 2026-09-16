@@ -36,7 +36,7 @@ export const Route = createFileRoute('/app/')({
 })
 
 function TodayPage() {
-  const { blinkUser, company } = useAuth()
+  const { user, company } = useAuth()
   const [jobs, setJobs] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
   const [materials, setMaterials] = useState<any[]>([])
@@ -105,7 +105,7 @@ function TodayPage() {
       title: newTitle,
       description: '',
       dueDate: '',
-      status: 'waiting',
+      status: 'pending',
       totalAmountCents: 0,
     }, company.id).then(() => {
       toast.success('Trabalho criado', { description: 'Agora você pode completar os materiais e a data.' })
@@ -125,7 +125,7 @@ function TodayPage() {
       materialId: requirement.materialId,
       variantId: requirement.variantId,
       quantity: requirement.missingQuantity,
-      movementType: 'entry',
+      movementType: 'in',
       note: `Compra para ${requirement.relatedJobs[0]?.jobTitle}`,
     }, company.id).then(() => {
       toast.success('Compra registrada', { description: `${requirement.materialName} adicionado ao estoque.` })
@@ -164,7 +164,7 @@ function TodayPage() {
     )
   }
 
-  const userName = blinkUser?.displayName || blinkUser?.email?.split('@')[0] || 'Usuário'
+  const userName = user?.displayName || user?.email?.split('@')[0] || 'Usuário'
 
   return (
     <div className="min-h-dvh bg-background pb-24 md:pb-8">

@@ -1,138 +1,119 @@
-// Auto-generated from your database schema — do not edit by hand.
-// Regenerates automatically whenever a table is created or altered.
+// Database types for Supabase schema
+// Matches the schema defined in supabase/migrations/001_initial_schema.sql
 
 export type CompaniesRow = {
   id: string
-  ownerUserId: string
   name: string
-  responsibleName: string | null
+  responsible_name: string | null
   phone: string | null
-  businessType: string | null
-  createdAt: string
-  userId: string | null
+  business_type: string | null
+  created_at: string
+}
+
+export type CompanyMembersRow = {
+  company_id: string
+  user_id: string
+  role: string
+  created_at: string
 }
 
 export type CustomersRow = {
   id: string
-  companyId: string
+  company_id: string
   name: string
   phone: string | null
   email: string | null
   address: string | null
   notes: string | null
-  createdAt: string
-  userId: string | null
-}
-
-export type JobMaterialsRow = {
-  id: string
-  companyId: string
-  jobId: string
-  materialId: string
-  variant: string | null
-  quantity: string
-  createdAt: string
-  userId: string | null
-}
-
-export type JobsRow = {
-  id: string
-  companyId: string
-  customerId: string
-  title: string
-  description: string | null
-  dueDate: string | null
-  status: string
-  totalAmountCents: number | string
-  createdAt: string
-  userId: string | null
-}
-
-export type MaterialVariantsRow = {
-  id: string
-  companyId: string
-  materialId: string
-  label: string
-  createdAt: string
-  userId: string | null
-}
-
-export type MaterialsRow = {
-  id: string
-  companyId: string
-  name: string
-  unit: string
-  currentQuantity: string
-  minimumQuantity: string | null
-  notes: string | null
-  createdAt: string
-  userId: string | null
+  created_at: string
 }
 
 export type QuoteItemsRow = {
   id: string
-  companyId: string
-  quoteId: string
+  company_id: string
+  quote_id: string
   description: string
   quantity: string
-  unitPriceCents: number | string
-  createdAt: string
-  userId: string | null
+  unit_price_cents: number | string
+  created_at: string
 }
 
 export type QuotesRow = {
   id: string
-  companyId: string
-  customerId: string
+  company_id: string
+  customer_id: string
   title: string
   description: string | null
   status: string
-  totalAmountCents: number | string
-  validUntil: string | null
-  estimatedDays: string | null
+  total_amount_cents: number | string
+  valid_until: string | null
+  estimated_days: number | null
   notes: string | null
-  createdAt: string
-  userId: string | null
+  created_at: string
 }
 
-export type ReceivablesRow = {
+export type JobsRow = {
   id: string
-  companyId: string
-  jobId: string
-  customerId: string
-  description: string
-  amountCents: number | string
-  dueDate: string
+  company_id: string
+  customer_id: string
+  title: string
+  description: string | null
+  due_date: string | null
   status: string
-  receivedAt: string | null
-  createdAt: string
-  userId: string | null
+  total_amount_cents: number | string
+  created_at: string
+}
+
+export type JobMaterialsRow = {
+  id: string
+  company_id: string
+  job_id: string
+  material_id: string
+  variant: string | null
+  quantity: string
+  created_at: string
+}
+
+export type MaterialsRow = {
+  id: string
+  company_id: string
+  name: string
+  unit: string
+  current_quantity: string
+  minimum_quantity: string | null
+  notes: string | null
+  created_at: string
+}
+
+export type MaterialVariantsRow = {
+  id: string
+  company_id: string
+  material_id: string
+  label: string
+  created_at: string
 }
 
 export type StockMovementsRow = {
   id: string
-  companyId: string
-  materialId: string
-  jobId: string | null
+  company_id: string
+  material_id: string
+  job_id: string | null
   variant: string | null
   quantity: string
-  movementType: string
+  movement_type: string
   note: string | null
-  createdAt: string
-  userId: string | null
+  created_at: string
 }
 
-export type UsersRow = {
+export type ReceivablesRow = {
   id: string
-  email: string
-  emailVerified: number | string | null
-  displayName: string | null
-  avatarUrl: string | null
-  phone: string | null
-  phoneVerified: number | string | null
-  role: string | null
-  metadata: string | null
-  createdAt: string
-  updatedAt: string
-  lastSignIn: string
+  company_id: string
+  job_id: string
+  customer_id: string
+  description: string
+  amount_cents: number | string
+  due_date: string
+  status: string
+  received_at: string | null
+  created_at: string
 }

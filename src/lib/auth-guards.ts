@@ -1,26 +1,30 @@
-import { blink } from '@/blink/client'
+import { supabase } from '@/lib/supabase/client'
 
 /**
- * Wait for Blink auth to finish initializing.
- * Returns when state.isLoading becomes false.
+ * Wait for Supabase auth to finish initializing.
+ * Returns when auth state is settled.
  */
 export function waitForAuthReady(): Promise<boolean> {
   return new Promise((resolve) => {
-    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
-      if (!state.isLoading) {
-        unsubscribe()
-        resolve(!!state.user)
-      }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      resolve(!!session?.user)
+    })
+
+    // Listen for auth changes to ensure we catch the settled state
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      subscription.unsubscribe()
+      resolve(!!session?.user)
     })
   })
 }
 
 /**
- * Get the current auth state without waiting.
- * Use this only when you have already waited for initialization.
+ * Get the current auth user.
  */
-export function getCurrentAuthUser() {
-  return blink.auth.currentUser()
+export async function getCurrentAuthUser() {
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
 }
 
 /**
@@ -28,8 +32,18 @@ export function getCurrentAuthUser() {
  */
 export async function getCompanyForUser(userId: string) {
   try {
-    const companies = await blink.db.table('companies').list()
-    return companies.find(c => c.ownerUserId === userId) || null
+    const { data, error } = await supabase
+      .from('company_members')
+      .select('companies(*)')
+      .eq('user_id', userId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching company:', error)
+      return null
+    }
+
+    return data?.companies || null
   } catch (error) {
     console.error('Error fetching company:', error)
     return null

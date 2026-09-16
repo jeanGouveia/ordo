@@ -30,7 +30,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/auth'
-import { blink } from '@/blink/client'
 
 const SIDEBAR_KEY = 'sidebar_collapsed'
 
@@ -79,7 +78,7 @@ function NavItem({ item, collapsed }: { item: NavItemDef; collapsed: boolean }) 
 }
 
 export function AppSidebarShell() {
-  const { blinkUser, company, signOut } = useAuth()
+  const { user, company, signOut } = useAuth()
   
   // SSR always renders expanded; the saved preference is restored after mount.
   // Reading localStorage in the initializer makes the client's first render
@@ -103,12 +102,12 @@ export function AppSidebarShell() {
     window.location.href = '/'
   }
 
-  const userInitials = blinkUser?.displayName 
-    ? blinkUser.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    : blinkUser?.email?.split('@')[0].slice(0, 2).toUpperCase() || 'U'
+  const userInitials = user?.displayName 
+    ? user.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : user?.email?.split('@')[0].slice(0, 2).toUpperCase() || 'U'
 
-  const userName = blinkUser?.displayName || blinkUser?.email?.split('@')[0] || 'User'
-  const userEmail = blinkUser?.email || 'user@example.com'
+  const userName = user?.displayName || user?.email?.split('@')[0] || 'User'
+  const userEmail = user?.email || 'user@example.com'
 
   return (
     <TooltipProvider delayDuration={0}>

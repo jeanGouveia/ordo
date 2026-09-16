@@ -3,8 +3,7 @@ import React from 'react'
 import { Building2, Hammer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
-import { blink } from '@/blink/client'
+import { supabase } from '@/lib/supabase/client'
 import { waitForAuthReady, getCompanyForUser } from '@/lib/auth-guards'
 
 /**
@@ -12,11 +11,11 @@ import { waitForAuthReady, getCompanyForUser } from '@/lib/auth-guards'
  */
 export const Route = createFileRoute('/')({
   beforeLoad: async () => {
-    // Wait for Blink auth to finish initializing
+    // Wait for Supabase auth to finish initializing
     const isAuthenticated = await waitForAuthReady()
     
     if (isAuthenticated) {
-      const user = blink.auth.currentUser()
+      const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const company = await getCompanyForUser(user.id)
         
@@ -33,81 +32,79 @@ export const Route = createFileRoute('/')({
 
 function HomePage() {
   return (
-    <BlinkClientBoundary>
-      <div className="min-h-dvh flex flex-col">
-        <header className="border-b border-border bg-background">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-bold">
-                OR
-              </div>
-              <span className="font-semibold">ORDO</span>
+    <div className="min-h-dvh flex flex-col">
+      <header className="border-b border-border bg-background">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-bold">
+              OR
             </div>
-            <Button
-              onClick={() => window.location.href = '/app'}
-              variant="ghost"
-            >
-              Entrar
-            </Button>
+            <span className="font-semibold">ORDO</span>
           </div>
-        </header>
+          <Button
+            onClick={() => window.location.href = '/app'}
+            variant="ghost"
+          >
+            Entrar
+          </Button>
+        </div>
+      </header>
 
-        <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12 text-center sm:px-6 lg:px-8">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-              Do orçamento à entrega, sem perder prazo, material ou dinheiro.
-            </h1>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Sistema simples para pequenos negócios que produzem ou prestam serviços sob encomenda.
-            </p>
-          </div>
+      <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12 text-center sm:px-6 lg:px-8">
+        <div className="max-w-3xl">
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+            Do orçamento à entrega, sem perder prazo, material ou dinheiro.
+          </h1>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Sistema simples para pequenos negócios que produzem ou prestam serviços sob encomenda.
+          </p>
+        </div>
 
-          <div className="grid gap-6 sm:grid-cols-3">
-            <FeatureCard
-              icon={<Hammer className="h-6 w-6" />}
-              title="O que preciso fazer?"
-              description="Acompanhe trabalhos, prazos e status em um só lugar."
-            />
-            <FeatureCard
-              icon={<Building2 className="h-6 w-6" />}
-              title="O que preciso comprar?"
-              description="Saiba exatamente quais materiais comprar e quando."
-            />
-            <FeatureCard
-              icon={<span className="text-2xl">💰</span>}
-              title="O que preciso receber?"
-              description="Controle entradas, saldos e cobranças de clientes."
-            />
-          </div>
+        <div className="grid gap-6 sm:grid-cols-3">
+          <FeatureCard
+            icon={<Hammer className="h-6 w-6" />}
+            title="O que preciso fazer?"
+            description="Acompanhe trabalhos, prazos e status em um só lugar."
+          />
+          <FeatureCard
+            icon={<Building2 className="h-6 w-6" />}
+            title="O que preciso comprar?"
+            description="Saiba exatamente quais materiais comprar e quando."
+          />
+          <FeatureCard
+            icon={<span className="text-2xl">💰</span>}
+            title="O que preciso receber?"
+            description="Controle entradas, saldos e cobranças de clientes."
+          />
+        </div>
 
-          <div className="flex gap-4">
-            <Button
-              size="lg"
-              onClick={() => {
-                blink.auth.login()
-              }}
-            >
-              Entrar com Google
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => {
-                blink.auth.login()
-              }}
-            >
-              Entrar com Email
-            </Button>
-          </div>
-        </main>
+        <div className="flex gap-4">
+          <Button
+            size="lg"
+            onClick={() => {
+              supabase.auth.signInWithOAuth({ provider: 'google' })
+            }}
+          >
+            Entrar com Google
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => {
+              window.location.href = '/app'
+            }}
+          >
+            Entrar com Email
+          </Button>
+        </div>
+      </main>
 
-        <footer className="border-t border-border bg-background py-6">
-          <div className="mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
-            <p>© 2024 ORDO · Valtun</p>
-          </div>
-        </footer>
-      </div>
-    </BlinkClientBoundary>
+      <footer className="border-t border-border bg-background py-6">
+        <div className="mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground sm:px-6 lg:px-8">
+          <p>© 2024 ORDO · Valtun</p>
+        </div>
+      </footer>
+    </div>
   )
 }
 

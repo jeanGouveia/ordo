@@ -30,14 +30,14 @@ export function calculateStockFuture(
   const requirements: MaterialRequirement[] = []
   
   for (const material of materials) {
-    const currentQuantity = Number(material.currentQuantity)
-    const materialJobMaterials = jobMaterials.filter(jm => jm.materialId === material.id)
+    const currentQuantity = Number(material.current_quantity)
+    const materialJobMaterials = jobMaterials.filter(jm => jm.material_id === material.id)
     
     if (materialJobMaterials.length === 0) {
       continue
     }
 
-    const variants = materialVariants.filter(mv => mv.materialId === material.id)
+    const variants = materialVariants.filter(mv => mv.material_id === material.id)
     
     if (variants.length === 0) {
       const requirement = calculateForMaterial(material, materialJobMaterials, jobs, currentQuantity, null)
@@ -88,16 +88,16 @@ function calculateForMaterial(
   }>()
 
   for (const jm of materialJobMaterials) {
-    const job = jobs.find(j => j.id === jm.jobId)
+    const job = jobs.find(j => j.id === jm.job_id)
     if (!job || job.status === 'cancelled') {
       continue
     }
 
-    const existing = relatedJobsMap.get(jm.jobId)
+    const existing = relatedJobsMap.get(jm.job_id)
     if (existing) {
       existing.totalQuantity += Number(jm.quantity)
     } else {
-      relatedJobsMap.set(jm.jobId, {
+      relatedJobsMap.set(jm.job_id, {
         job,
         totalQuantity: Number(jm.quantity),
       })
@@ -112,7 +112,7 @@ function calculateForMaterial(
     .map(([jobId, data]) => ({
       jobId,
       jobTitle: data.job.title,
-      jobDueDate: data.job.dueDate,
+      jobDueDate: data.job.due_date,
       quantity: data.totalQuantity,
     }))
     .sort((a, b) => {
@@ -150,5 +150,4 @@ function calculateForMaterial(
     relatedJobs,
   }
 }
-
 

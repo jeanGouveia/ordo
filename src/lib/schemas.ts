@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const customerSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Nome é obrigatório'),
-  whatsapp: z.string().min(1, 'WhatsApp é obrigatório'),
+  phone: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   address: z.string().optional(),
   notes: z.string().optional(),
@@ -41,7 +41,7 @@ export const jobSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().optional(),
   dueDate: z.string().optional(),
-  status: z.enum(['waiting', 'in_progress', 'ready', 'delivery_scheduled', 'completed', 'cancelled']),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']),
   totalAmountCents: z.number().min(0),
 })
 
@@ -80,7 +80,7 @@ export const stockMovementSchema = z.object({
   variantId: z.string().optional(),
   jobId: z.string().optional(),
   quantity: z.number(),
-  movementType: z.enum(['entry', 'exit', 'adjustment']),
+  movementType: z.enum(['in', 'out']),
   note: z.string().optional(),
 })
 
@@ -94,7 +94,7 @@ export const receivableSchema = z.object({
   description: z.string().min(1, 'Descrição é obrigatória'),
   amountCents: z.number().min(0.01, 'Valor deve ser maior que zero'),
   dueDate: z.string().min(1, 'Data de vencimento é obrigatória'),
-  status: z.enum(['pending', 'received', 'overdue']),
+  status: z.enum(['pending', 'partial', 'received', 'cancelled']),
 })
 
 export type ReceivableInput = z.infer<typeof receivableSchema>
