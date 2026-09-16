@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import React from 'react'
 import { Building2, Hammer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,24 @@ import { blink } from '@/blink/client'
  * Home route (/). Landing page with authentication.
  */
 export const Route = createFileRoute('/')({
+  beforeLoad: async () => {
+    const user = blink.auth.currentUser()
+    if (user) {
+      let company = null
+      try {
+        const companies = await blink.db.table('companies').list()
+        company = companies.find(c => c.ownerUserId === user.id)
+      } catch (error) {
+        console.error('Error checking company:', error)
+      }
+      
+      if (company) {
+        throw redirect({ to: '/app' })
+      } else {
+        throw redirect({ to: '/setup-company' })
+      }
+    }
+  },
   component: HomePage,
 })
 
@@ -66,7 +84,7 @@ function HomePage() {
             <Button
               size="lg"
               onClick={() => {
-                blink.auth.signInWithGoogle().catch(console.error)
+                blink.auth.login()
               }}
             >
               Entrar com Google

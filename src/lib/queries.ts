@@ -14,10 +14,8 @@ import type {
 
 export async function getCompanyByUserId(userId: string): Promise<CompaniesRow | null> {
   try {
-    const companies = await blink.db.table('companies').list({
-      where: { ownerUserId: userId }
-    })
-    return companies[0] || null
+    const companies = await blink.db.table('companies').list()
+    return companies.find(c => c.ownerUserId === userId) || null
   } catch (error) {
     console.error('Error fetching company:', error)
     return null

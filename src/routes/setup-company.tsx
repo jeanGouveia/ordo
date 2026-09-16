@@ -17,20 +17,11 @@ export const Route = createFileRoute('/setup-company')({
       throw redirect({ to: '/' })
     }
 
-    try {
-      const companies = await blink.db.table('companies').list({
-        where: { ownerUserId: user.id }
-      })
-      const company = companies[0]
+    const companies = await blink.db.table('companies').list()
+    const company = companies.find(c => c.ownerUserId === user.id)
 
-      if (company) {
-        throw redirect({ to: '/app' })
-      }
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('redirect')) {
-        throw error
-      }
-      console.error('Error checking company:', error)
+    if (company) {
+      throw redirect({ to: '/app' })
     }
   },
   component: SetupCompanyPage,

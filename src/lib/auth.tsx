@@ -44,10 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshCompanyForUser = async (userId: string) => {
     try {
-      const companies = await blink.db.table('companies').list({
-        where: { ownerUserId: userId }
-      })
-      setCompany(companies[0] || null)
+      const companies = await blink.db.table('companies').list()
+      setCompany(companies.find(c => c.ownerUserId === userId) || null)
     } catch (error) {
       console.error('Error fetching company data:', error)
       setCompany(null)
