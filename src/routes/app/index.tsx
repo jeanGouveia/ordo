@@ -105,7 +105,7 @@ function TodayPage() {
       title: newTitle,
       description: '',
       dueDate: '',
-      status: 'pending',
+      status: 'waiting',
       totalAmountCents: 0,
     }, company.id).then(() => {
       toast.success('Trabalho criado', { description: 'Agora você pode completar os materiais e a data.' })

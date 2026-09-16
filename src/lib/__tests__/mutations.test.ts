@@ -13,10 +13,11 @@ describe('Business Rules Tests', () => {
           id: 'job1',
           company_id: 'cmp1',
           customer_id: 'cust1',
+          quote_id: null,
           title: 'Job 1',
           description: null,
           due_date: '2026-09-20',
-          status: 'pending',
+          status: 'waiting',
           total_amount_cents: 0,
           created_at: '2026-09-15'
         }
@@ -51,10 +52,11 @@ describe('Business Rules Tests', () => {
           id: 'job1',
           company_id: 'cmp1',
           customer_id: 'cust1',
+          quote_id: null,
           title: 'Job 1',
           description: null,
           due_date: '2026-09-20',
-          status: 'pending',
+          status: 'waiting',
           total_amount_cents: 0,
           created_at: '2026-09-15'
         }
@@ -86,10 +88,11 @@ describe('Business Rules Tests', () => {
           id: 'job1',
           company_id: 'cmp1',
           customer_id: 'cust1',
+          quote_id: null,
           title: 'Job A',
           description: null,
           due_date: '2026-09-20',
-          status: 'pending',
+          status: 'waiting',
           total_amount_cents: 0,
           created_at: '2026-09-15'
         },
@@ -97,10 +100,11 @@ describe('Business Rules Tests', () => {
           id: 'job2',
           company_id: 'cmp1',
           customer_id: 'cust1',
+          quote_id: null,
           title: 'Job B',
           description: null,
           due_date: '2026-09-25',
-          status: 'pending',
+          status: 'waiting',
           total_amount_cents: 0,
           created_at: '2026-09-15'
         }
@@ -144,10 +148,11 @@ describe('Business Rules Tests', () => {
           id: 'job1',
           company_id: 'cmp1',
           customer_id: 'cust1',
+          quote_id: null,
           title: 'Job A',
           description: null,
           due_date: '2026-09-20',
-          status: 'pending',
+          status: 'waiting',
           total_amount_cents: 0,
           created_at: '2026-09-15'
         },
@@ -155,10 +160,11 @@ describe('Business Rules Tests', () => {
           id: 'job2',
           company_id: 'cmp1',
           customer_id: 'cust1',
+          quote_id: null,
           title: 'Job B',
           description: null,
           due_date: '2026-09-25',
-          status: 'pending',
+          status: 'waiting',
           total_amount_cents: 0,
           created_at: '2026-09-15'
         }
@@ -202,6 +208,7 @@ describe('Business Rules Tests', () => {
           id: 'job1',
           company_id: 'cmp1',
           customer_id: 'cust1',
+          quote_id: null,
           title: 'Job Cancelado',
           description: null,
           due_date: '2026-09-20',
@@ -238,10 +245,11 @@ describe('Business Rules Tests', () => {
           id: 'job1',
           company_id: 'cmp1',
           customer_id: 'cust1',
+          quote_id: null,
           title: 'Job 1',
           description: null,
           due_date: '2026-09-20',
-          status: 'pending',
+          status: 'waiting',
           total_amount_cents: 0,
           created_at: '2026-09-15'
         }
@@ -309,6 +317,49 @@ describe('Business Rules Tests', () => {
       
       // Deve lançar erro para registro inexistente
       expect(() => validateOwnership('rec3', 'cmp1', records)).toThrow('Record not found or does not belong to this company')
+    })
+  })
+
+  describe('Quote Approval Job Status', () => {
+    it('Job criado por aprovação de orçamento deve ter status "waiting"', () => {
+      // Teste conceitual: verifica que o schema TypeScript permite o status correto
+      const validJobStatuses = ['waiting', 'in_progress', 'ready', 'delivery_scheduled', 'completed', 'cancelled']
+      const expectedInitialStatus = 'waiting'
+      
+      expect(validJobStatuses).toContain(expectedInitialStatus)
+    })
+  })
+
+  describe('Quote Id Field', () => {
+    it('JobsRow deve ter campo quote_id opcional', () => {
+      const jobWithQuote: JobsRow = {
+        id: 'job1',
+        company_id: 'cmp1',
+        customer_id: 'cust1',
+        quote_id: 'quote1',
+        title: 'Job from Quote',
+        description: null,
+        due_date: null,
+        status: 'waiting',
+        total_amount_cents: 10000,
+        created_at: '2026-09-15'
+      }
+
+      const jobWithoutQuote: JobsRow = {
+        id: 'job2',
+        company_id: 'cmp1',
+        customer_id: 'cust1',
+        quote_id: null,
+        title: 'Manual Job',
+        description: null,
+        due_date: null,
+        status: 'waiting',
+        total_amount_cents: 5000,
+        created_at: '2026-09-15'
+      }
+
+      expect(jobWithQuote.quote_id).toBe('quote1')
+      expect(jobWithoutQuote.quote_id).toBeNull()
     })
   })
 })

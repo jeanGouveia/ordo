@@ -41,7 +41,7 @@ export const jobSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().optional(),
   dueDate: z.string().optional(),
-  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']),
+  status: z.enum(['waiting', 'in_progress', 'ready', 'delivery_scheduled', 'completed', 'cancelled']),
   totalAmountCents: z.number().min(0),
 })
 

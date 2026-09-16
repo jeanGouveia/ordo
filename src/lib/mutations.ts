@@ -361,54 +361,28 @@ export async function updateJobStatus(id: string, status: string, companyId: str
 }
 
 export async function approveQuoteAndCreateJob(quoteId: string, companyId: string) {
-  const { data: existingJob, error: jobError } = await supabase
+  const { data, error } = await supabase.rpc('approve_quote_and_create_job', {
+    p_quote_id: quoteId
+  })
+
+  if (error) {
+    throw new Error('Failed to approve quote and create job: ' + error.message)
+  }
+
+  // Fetch the created job
+  const jobId = data?.job_id
+  if (!jobId) {
+    throw new Error('Failed to get job ID from RPC response')
+  }
+
+  const { data: job, error: fetchError } = await supabase
     .from('jobs')
     .select('*')
-    .eq('quote_id', quoteId)
-    .eq('company_id', companyId)
-    .maybeSingle()
-
-  if (existingJob) {
-    return existingJob
-  }
-
-  const { data: quote, error: quoteError } = await supabase
-    .from('quotes')
-    .select('*')
-    .eq('id', quoteId)
-    .eq('company_id', companyId)
+    .eq('id', jobId)
     .single()
 
-  if (quoteError || !quote) {
-    throw new Error('Quote not found')
-  }
-
-  const { error: updateError } = await supabase
-    .from('quotes')
-    .update({ status: 'approved' })
-    .eq('id', quoteId)
-
-  if (updateError) {
-    throw new Error('Failed to update quote status: ' + updateError.message)
-  }
-
-  const { data: job, error: createError } = await supabase
-    .from('jobs')
-    .insert({
-      company_id: companyId,
-      customer_id: quote.customer_id,
-      quote_id: quote.id,
-      title: quote.title,
-      description: quote.description,
-      due_date: null,
-      status: 'waiting',
-      total_amount_cents: quote.total_amount_cents,
-    })
-    .select()
-    .single()
-
-  if (createError) {
-    throw new Error('Failed to create job: ' + createError.message)
+  if (fetchError) {
+    throw new Error('Failed to fetch created job: ' + fetchError.message)
   }
 
   return job

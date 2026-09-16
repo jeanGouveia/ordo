@@ -45,7 +45,7 @@ CREATE TABLE quotes (
   customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
-  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'approved', 'rejected')),
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'approved', 'rejected', 'cancelled')),
   total_amount_cents BIGINT NOT NULL DEFAULT 0,
   valid_until TIMESTAMPTZ,
   estimated_days INTEGER,
@@ -71,40 +71,7 @@ CREATE TABLE quote_items (
 CREATE INDEX idx_quote_items_company_id ON quote_items(company_id);
 CREATE INDEX idx_quote_items_quote_id ON quote_items(quote_id);
 
--- Jobs table
-CREATE TABLE jobs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  due_date TIMESTAMPTZ,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
-  total_amount_cents BIGINT NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_jobs_company_id ON jobs(company_id);
-CREATE INDEX idx_jobs_customer_id ON jobs(customer_id);
-CREATE INDEX idx_jobs_status ON jobs(status);
-CREATE INDEX idx_jobs_due_date ON jobs(due_date);
-
--- Job materials table
-CREATE TABLE job_materials (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-  job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-  material_id UUID NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
-  variant TEXT,
-  quantity TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_job_materials_company_id ON job_materials(company_id);
-CREATE INDEX idx_job_materials_job_id ON job_materials(job_id);
-CREATE INDEX idx_job_materials_material_id ON job_materials(material_id);
-
--- Materials table
+-- Materials table (must be before job_materials)
 CREATE TABLE materials (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -129,6 +96,42 @@ CREATE TABLE material_variants (
 
 CREATE INDEX idx_material_variants_company_id ON material_variants(company_id);
 CREATE INDEX idx_material_variants_material_id ON material_variants(material_id);
+
+-- Jobs table (with quote_id)
+CREATE TABLE jobs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  quote_id UUID REFERENCES quotes(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  due_date TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_progress', 'ready', 'delivery_scheduled', 'completed', 'cancelled')),
+  total_amount_cents BIGINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT unique_quote_id UNIQUE (quote_id) WHERE quote_id IS NOT NULL
+);
+
+CREATE INDEX idx_jobs_company_id ON jobs(company_id);
+CREATE INDEX idx_jobs_customer_id ON jobs(customer_id);
+CREATE INDEX idx_jobs_quote_id ON jobs(quote_id);
+CREATE INDEX idx_jobs_status ON jobs(status);
+CREATE INDEX idx_jobs_due_date ON jobs(due_date);
+
+-- Job materials table (must be after materials and jobs)
+CREATE TABLE job_materials (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  material_id UUID NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+  variant TEXT,
+  quantity TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_job_materials_company_id ON job_materials(company_id);
+CREATE INDEX idx_job_materials_job_id ON job_materials(job_id);
+CREATE INDEX idx_job_materials_material_id ON job_materials(material_id);
 
 -- Stock movements table
 CREATE TABLE stock_movements (
@@ -186,20 +189,9 @@ CREATE POLICY "Users can view own company memberships"
   ON company_members FOR SELECT
   USING (auth.uid() = user_id);
 
--- Users can insert company memberships (only via RPC, this is a safety net)
-CREATE POLICY "Users can insert company memberships"
-  ON company_members FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- Users can update their own role (restricted, owner only should be allowed via RPC)
-CREATE POLICY "Users can update own company memberships"
-  ON company_members FOR UPDATE
-  USING (auth.uid() = user_id);
-
--- Users can delete their own membership
-CREATE POLICY "Users can delete own company memberships"
-  ON company_members FOR DELETE
-  USING (auth.uid() = user_id);
+-- No INSERT policy - membership created only via RPC
+-- No UPDATE policy - roles managed only via RPC
+-- No DELETE policy - membership removal managed only via RPC
 
 -- RLS Policies for companies
 -- Users can view companies they are members of
@@ -625,7 +617,14 @@ SET search_path = public
 AS $$
 DECLARE
   v_company_id UUID;
+  v_user_id UUID;
 BEGIN
+  -- Validate user is authenticated
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated';
+  END IF;
+
   -- Create company
   INSERT INTO companies (name, responsible_name, phone, business_type)
   VALUES (p_name, p_responsible_name, p_phone, p_business_type)
@@ -633,7 +632,7 @@ BEGIN
   
   -- Create membership for current user
   INSERT INTO company_members (company_id, user_id, role)
-  VALUES (v_company_id, auth.uid(), 'owner');
+  VALUES (v_company_id, v_user_id, 'owner');
   
   RETURN v_company_id;
 END;
@@ -641,3 +640,96 @@ $$;
 
 -- Grant execute on the function to authenticated users
 GRANT EXECUTE ON FUNCTION create_company_with_membership TO authenticated;
+
+-- RPC function to approve quote and create job atomically
+CREATE OR REPLACE FUNCTION approve_quote_and_create_job(p_quote_id UUID)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_quote RECORD;
+  v_job_id UUID;
+  v_result JSON;
+BEGIN
+  -- Validate user is authenticated
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated';
+  END IF;
+
+  -- Get quote and validate user access
+  SELECT * INTO v_quote
+  FROM quotes
+  WHERE id = p_quote_id
+  AND EXISTS (
+    SELECT 1 FROM company_members
+    WHERE company_members.company_id = quotes.company_id
+    AND company_members.user_id = v_user_id
+  );
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Quote not found or access denied';
+  END IF;
+
+  -- Validate quote status
+  IF v_quote.status NOT IN ('draft', 'sent') THEN
+    RAISE EXCEPTION 'Quote can only be approved from draft or sent status';
+  END IF;
+
+  -- Check if job already exists (idempotency)
+  SELECT id INTO v_job_id
+  FROM jobs
+  WHERE quote_id = p_quote_id;
+
+  IF v_job_id IS NOT NULL THEN
+    -- Job already exists, return it
+    SELECT json_build_object(
+      'job_id', v_job_id,
+      'already_existed', true
+    ) INTO v_result;
+    RETURN v_result;
+  END IF;
+
+  -- Update quote status to approved
+  UPDATE quotes
+  SET status = 'approved'
+  WHERE id = p_quote_id;
+
+  -- Create job
+  INSERT INTO jobs (
+    company_id,
+    customer_id,
+    quote_id,
+    title,
+    description,
+    due_date,
+    status,
+    total_amount_cents
+  )
+  VALUES (
+    v_quote.company_id,
+    v_quote.customer_id,
+    v_quote.id,
+    v_quote.title,
+    v_quote.description,
+    NULL,
+    'waiting',
+    v_quote.total_amount_cents
+  )
+  RETURNING id INTO v_job_id;
+
+  -- Return created job
+  SELECT json_build_object(
+    'job_id', v_job_id,
+    'already_existed', false
+  ) INTO v_result;
+
+  RETURN v_result;
+END;
+$$;
+
+-- Grant execute on the function to authenticated users
+GRANT EXECUTE ON FUNCTION approve_quote_and_create_job TO authenticated;

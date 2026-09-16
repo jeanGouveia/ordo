@@ -56,6 +56,7 @@ export type JobsRow = {
   id: string
   company_id: string
   customer_id: string
+  quote_id: string | null
   title: string
   description: string | null
   due_date: string | null
