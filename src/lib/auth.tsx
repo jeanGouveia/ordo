@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { blink } from '@/blink/client'
-import type { UsersRow, CompaniesRow } from '@/lib/db-types'
+import type { CompaniesRow } from '@/lib/db-types'
 
 interface AuthContextValue {
-  user: UsersRow | null
+  blinkUser: { id: string; email: string; displayName?: string } | null
   company: CompaniesRow | null
   loading: boolean
   signOut: () => Promise<void>
@@ -13,27 +13,28 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UsersRow | null>(null)
+  const [blinkUser, setBlinkUser] = useState<{ id: string; email: string; displayName?: string } | null>(null)
   const [company, setCompany] = useState<CompaniesRow | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = blink.auth.onAuthStateChanged(async (authState) => {
-      if (authState.user) {
-        try {
-          const userData = await blink.db.table('users').get(authState.user.id)
-          setUser(userData || null)
+    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
+      // Use state.isLoading to distinguish initializing from signed out
+      if (state.isLoading) {
+        setLoading(true)
+        return
+      }
 
-          if (userData) {
-            await refreshCompanyForUser(userData.id)
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error)
-          setUser(null)
-          setCompany(null)
-        }
+      if (state.user) {
+        setBlinkUser({
+          id: state.user.id,
+          email: state.user.email,
+          displayName: state.user.displayName,
+        })
+        // Load company for this user
+        loadCompanyForUser(state.user.id)
       } else {
-        setUser(null)
+        setBlinkUser(null)
         setCompany(null)
       }
       setLoading(false)
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe()
   }, [])
 
-  const refreshCompanyForUser = async (userId: string) => {
+  const loadCompanyForUser = async (userId: string) => {
     try {
       const companies = await blink.db.table('companies').list()
       setCompany(companies.find(c => c.ownerUserId === userId) || null)
@@ -54,18 +55,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await blink.auth.signOut()
-    setUser(null)
+    setBlinkUser(null)
     setCompany(null)
   }
 
   const refreshCompany = async () => {
-    if (user) {
-      await refreshCompanyForUser(user.id)
+    if (blinkUser) {
+      await loadCompanyForUser(blinkUser.id)
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, company, loading, signOut, refreshCompany }}>
+    <AuthContext.Provider value={{ blinkUser, company, loading, signOut, refreshCompany }}>
       {children}
     </AuthContext.Provider>
   )
@@ -80,19 +81,19 @@ export function useAuth() {
 }
 
 export function useRequireAuth() {
-  const { user, company, loading } = useAuth()
+  const { blinkUser, company, loading } = useAuth()
   
   if (loading) {
-    return { user: null, company: null, loading: true, authenticated: false }
+    return { blinkUser: null, company: null, loading: true, authenticated: false }
   }
   
-  if (!user) {
-    return { user: null, company: null, loading: false, authenticated: false }
+  if (!blinkUser) {
+    return { blinkUser: null, company: null, loading: false, authenticated: false }
   }
   
   if (!company) {
-    return { user, company: null, loading: false, authenticated: false }
+    return { blinkUser, company: null, loading: false, authenticated: false }
   }
   
-  return { user, company, loading: false, authenticated: true }
+  return { blinkUser, company, loading: false, authenticated: true }
 }

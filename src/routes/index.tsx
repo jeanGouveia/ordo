@@ -5,26 +5,26 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
 import { blink } from '@/blink/client'
+import { waitForAuthReady, getCompanyForUser } from '@/lib/auth-guards'
 
 /**
  * Home route (/). Landing page with authentication.
  */
 export const Route = createFileRoute('/')({
   beforeLoad: async () => {
-    const user = blink.auth.currentUser()
-    if (user) {
-      let company = null
-      try {
-        const companies = await blink.db.table('companies').list()
-        company = companies.find(c => c.ownerUserId === user.id)
-      } catch (error) {
-        console.error('Error checking company:', error)
-      }
-      
-      if (company) {
-        throw redirect({ to: '/app' })
-      } else {
-        throw redirect({ to: '/setup-company' })
+    // Wait for Blink auth to finish initializing
+    const isAuthenticated = await waitForAuthReady()
+    
+    if (isAuthenticated) {
+      const user = blink.auth.currentUser()
+      if (user) {
+        const company = await getCompanyForUser(user.id)
+        
+        if (company) {
+          throw redirect({ to: '/app' })
+        } else {
+          throw redirect({ to: '/setup-company' })
+        }
       }
     }
   },

@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,17 +9,24 @@ import { toast } from 'sonner'
 import { blink } from '@/blink/client'
 import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
 import { companySchema } from '@/lib/schemas'
+import { waitForAuthReady, getCompanyForUser } from '@/lib/auth-guards'
+import { useAuth } from '@/lib/auth'
 
 export const Route = createFileRoute('/setup-company')({
   beforeLoad: async () => {
+    // Wait for Blink auth to finish initializing
+    const isAuthenticated = await waitForAuthReady()
+    
+    if (!isAuthenticated) {
+      throw redirect({ to: '/' })
+    }
+
     const user = blink.auth.currentUser()
     if (!user) {
       throw redirect({ to: '/' })
     }
 
-    const companies = await blink.db.table('companies').list()
-    const company = companies.find(c => c.ownerUserId === user.id)
-
+    const company = await getCompanyForUser(user.id)
     if (company) {
       throw redirect({ to: '/app' })
     }
@@ -35,6 +42,8 @@ function SetupCompanyPage() {
     phone: '',
     businessType: '',
   })
+  const navigate = useNavigate()
+  const { refreshCompany } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,7 +66,12 @@ function SetupCompanyPage() {
       })
 
       toast.success('Empresa cadastrada com sucesso!')
-      window.location.href = '/app'
+      
+      // Refresh company state in AuthProvider
+      await refreshCompany()
+      
+      // Navigate to /app using TanStack Router (client-side)
+      navigate({ to: '/app' })
     } catch (error) {
       console.error('Error creating company:', error)
       toast.error('Erro ao cadastrar empresa')

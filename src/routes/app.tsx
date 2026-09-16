@@ -2,6 +2,7 @@ import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { SharedAppLayout } from '@/layouts/shared-app-layout'
 import { blink } from '@/blink/client'
 import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
+import { waitForAuthReady, getCompanyForUser } from '@/lib/auth-guards'
 
 /**
  * App shell layout — mounted at the REAL `/app` segment (not a pathless `_app`).
@@ -33,14 +34,19 @@ import { BlinkClientBoundary } from '@/components/BlinkClientBoundary'
  */
 export const Route = createFileRoute('/app')({
   beforeLoad: async () => {
+    // Wait for Blink auth to finish initializing
+    const isAuthenticated = await waitForAuthReady()
+    
+    if (!isAuthenticated) {
+      throw redirect({ to: '/' })
+    }
+
     const user = blink.auth.currentUser()
     if (!user) {
       throw redirect({ to: '/' })
     }
 
-    const companies = await blink.db.table('companies').list()
-    const company = companies.find(c => c.ownerUserId === user.id)
-
+    const company = await getCompanyForUser(user.id)
     if (!company) {
       throw redirect({ to: '/setup-company' })
     }
@@ -50,7 +56,7 @@ export const Route = createFileRoute('/app')({
 
 function AppLayout() {
   return (
-    <SharedAppLayout appName="Ordem Simples">
+    <SharedAppLayout appName="ORDO">
       <BlinkClientBoundary>
         <Outlet />
       </BlinkClientBoundary>

@@ -36,7 +36,7 @@ export const Route = createFileRoute('/app/')({
 })
 
 function TodayPage() {
-  const { user, company } = useAuth()
+  const { blinkUser, company } = useAuth()
   const [jobs, setJobs] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
   const [materials, setMaterials] = useState<any[]>([])
@@ -164,7 +164,7 @@ function TodayPage() {
     )
   }
 
-  const userName = user?.displayName || user?.email?.split('@')[0] || 'Usuário'
+  const userName = blinkUser?.displayName || blinkUser?.email?.split('@')[0] || 'Usuário'
 
   return (
     <div className="min-h-dvh bg-background pb-24 md:pb-8">
