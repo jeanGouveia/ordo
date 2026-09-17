@@ -109,7 +109,7 @@ CREATE TABLE jobs (
   status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_progress', 'ready', 'delivery_scheduled', 'completed', 'cancelled')),
   total_amount_cents BIGINT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  CONSTRAINT unique_quote_id UNIQUE (quote_id) WHERE quote_id IS NOT NULL
+  CONSTRAINT unique_quote_id UNIQUE (quote_id)
 );
 
 CREATE INDEX idx_jobs_company_id ON jobs(company_id);
